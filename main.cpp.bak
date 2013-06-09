@@ -4,10 +4,9 @@
 #include<vector>
 using namespace std;
 
-long it_time = 0;
+long time = 0;
 long stop_time;
 int TTRT = 0;
-
 class Stacja;
 
 class FC_field {
@@ -62,7 +61,7 @@ Pakiet::Pakiet(bool l, char t, short p, Stacja* DA1, Stacja* SA1, int DATA_l){
 			DA_l = 60;
 			SA_l = 60;
 		}
-		INFO_l = ceil((float)DATA_l*5.0/4.0);
+		INFO_l = ceil((float)DATA_l*5/4);
 		FCS_l = 40;
 
 		FS_l = 5 * 3;
@@ -159,14 +158,11 @@ Stacja::Stacja(string str,int isyncTime) {
 }
 
 void Stacja::send(){
-     if(TRT>0)
-        TRT--;
-     else
-       TRT=TTRT;
-     //dodac linijke, pakowania danych do pakietu, jezeli THT > 0 i istniej¹ dane do nadania. 
-	if (pakiet != NULL and (token == true or receiving == true)) {
+
+	if (pakiet != NULL) {
 		if (sending == false){
 			cout << label << " rozpoczol nadawanie pakietu." << endl;
+			
 			nastepna->receiving = true;
 			sending = true;
 			send_counter = pakiet->length();
@@ -174,6 +170,8 @@ void Stacja::send(){
 		else if (sending == true && send_counter > 0) {
 			send_counter--;
 			if (pakiet->length() - pakiet->DA_l - pakiet->PA_l - pakiet->FS_l  == send_counter) {
+				cout<< "Pakiet wskazuje na: " << pakiet->DA->label << endl;
+				cout<< "Pakiet jest odbierany przez: " << nastepna->label << endl;
 				if  (pakiet->DA == nastepna){
 					cout << nastepna->label << " dostalem pakiet! ;)" << endl;
 					cout <<  "Pakiet przyszedl od " << pakiet->SA->label << endl;
@@ -186,24 +184,10 @@ void Stacja::send(){
 		}
 		else if (sending == true) {
 			sending = false;
-			nastepna->receiving = false;
 			pakiet = NULL;
-			if(token == true){
-                   token == false;
-	               nastepna->token = true;
-	               nastepna->THT = TRT;
-	               nastepna->TRT = TTRT;
-	               cout << nastepna->THT << " - THT" << endl;
-            }
 			cout << label << " zakonczyl nadawanie pakietu." << endl;
 		}
-	}else if(token == true and pakiet == NULL){
-	      token == false;
-	      nastepna->token = true;
-	      nastepna->THT = TRT;
-	      nastepna->TRT = TTRT;
-	      cout << nastepna->THT << " - THT" << endl;
- }   
+	}
 }
 
 
@@ -242,10 +226,10 @@ int main() {
 		}
 		TTRT += stacje[i]->syncTime;
 	}
-	//sztywny pakiet i token
+	//sztywny pakiet
 	stacje[0]->pakiet = new Pakiet(true, 's', 0, stacje[2], stacje[0], 300);
-    stacje[0]->token = true;
-	for (it_time; it_time<stop_time; it_time++){
+
+	for (time; time<stop_time; time++){
 		for (int i = 0; i<ilosc_stacji;i++){
 			stacje[i]->send();
 		}
