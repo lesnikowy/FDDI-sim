@@ -8,6 +8,7 @@ long it_time = 0;
 long stop_time;
 int TTRT = 0;
 
+
 class Stacja;
 
 class FC_field {
@@ -169,7 +170,8 @@ void Stacja::trt_dec(){
 
 void Stacja::send_token(){
      pakiet = new Pakiet(true, 't', 1, nastepna, this, 0 );
-     send();
+     nastepna->zapakuj();
+     nastepna->send();
 }
 
 void Stacja::zapakuj(){
@@ -181,7 +183,7 @@ void Stacja::zapakuj(){
               pakiet = new Pakiet(true, 's', 1, nastepna, this, syncData );
               syncData = 0;   
            } 		   
-     }else{
+     }else if(asyncData > 0 && THT > 0){
            if(asyncData > 9000){   
               pakiet = new Pakiet(true, 'a', 1, nastepna, this, 9000 );
               asyncData -= 9000;
@@ -193,41 +195,45 @@ void Stacja::zapakuj(){
      send();
 }
 void Stacja::send(){
-     //dodac linijke, pakowania danych do pakietu, jezeli THT > 0 i istniej¹ dane do nadania. 
-	if (pakiet != NULL and (token == true or receiving == true)) {
+
+	if (pakiet == NULL && token == true)
+	   send_token();
+    else if (pakiet != NULL && (token == true || receiving == true || sending == true)) {// rozdzielenie funkcji send i przeka¿
 		if (sending == false){
-			cout << label << " rozpoczal nadawanie pakietu." << endl;
+			cout << it_time << label << " rozpoczal nadawanie pakietu "<< pakiet->fc->type << " o dlugosci " << pakiet-> length() << endl;
 			nastepna->receiving = true;
 			sending = true;
 			send_counter = pakiet->length();
 		}
 		else if (sending == true && send_counter > 0) {
-			if ((pakiet->length() - pakiet->PA_l - pakiet->FS_l  == send_counter) && pakiet->fc->type == 't') {
+			if ((pakiet->length() - pakiet->PA_l - pakiet->SD_l - pakiet->fc->length == send_counter) && pakiet->fc->type == 't') {
                token = false;
                nastepna->token = true;
+               cout << it_time << nastepna->label << " dostal token" << endl;
                if(nastepna->TRT > 0)
                   nastepna->THT = TRT;
                else
                   nastepna->THT = 0; 
                nastepna->TRT = TTRT;
             }
-            if (pakiet->length() - pakiet->DA_l - pakiet->PA_l - pakiet->FS_l  == send_counter) {                
+            else if (pakiet->length() - pakiet->DA_l - pakiet->PA_l - pakiet->SD_l - pakiet->fc->length  == send_counter) {                
                 if  (pakiet->DA == nastepna){
-					cout << nastepna->label << " dostalem pakiet! ;)" << endl;
-					cout <<  "Pakiet przyszedl od " << pakiet->SA->label << endl;
+					cout << it_time << nastepna->label << " dostalem pakiet " << pakiet->fc-> type << endl;
+					cout << it_time <<  " Pakiet przyszedl od " << pakiet->SA->label << endl;
 				}else{
 					nastepna->pakiet=pakiet;
 					nastepna->send();
-					cout << nastepna->label << " przesyla dalej pakiet do " << nastepna->nastepna->label << endl;
+					cout << it_time << nastepna->label << " przesyla dalej pakiet do "<< pakiet->fc->type << nastepna->nastepna->label << endl;
 				}
 			}
+			
 			send_counter--;
 		}
 		else if (sending == true) {
 			sending = false;
 			nastepna->receiving = false;
 			pakiet = NULL;
-			cout << label << " zakonczyl nadawanie pakietu." << endl;
+			cout << it_time << label << " zakonczyl nadawanie pakietu." << endl;
 			if(asyncData == 0){
 			   send_token();
             }else{
@@ -243,13 +249,6 @@ void Stacja::send(){
 		}
 	}
 }   
-
-
-
-
-
-
-
 
 
 int main() {
@@ -271,7 +270,7 @@ int main() {
 		cin >> syncTime;
 		stacje.push_back(new Stacja(label, syncTime, pasmo));
 	}
-	TTRT = stacje[i]->syncTime;
+	TTRT = stacje[0]->syncTime;
 	
 	for (int i = 0; i<ilosc_stacji;i++){
 		if(i != 0){
@@ -291,17 +290,21 @@ int main() {
 	    stacje[i]->pasmo = (stacje[i]->pasmo * TTRT)/stacje[i]->syncTime;
 	int suma_pasm = 0; 
     for (int i = 0; i<ilosc_stacji;i++)
-        suma_pasm += (stacje[i]->pasmo*stacje);
+        suma_pasm += (stacje[i]->pasmo);
     if(suma_pasm > TTRT){
-        cout << "Nie mo¿na utworzyc sieci o takich parametrach"
+        cout << "Nie mo¿na utworzyc sieci o takich parametrach" << endl;
         return 0;
-        }        
+    }        
 	//sztywny pakiet i token
 	stacje[0]->pakiet = new Pakiet(true, 's', 0, stacje[2], stacje[0], 300);
     stacje[0]->token = true;
+    stacje[2]->asyncData = 200;
+    stacje[2]->syncData = 200;    
 	for (it_time; it_time<stop_time; it_time++){
 		for (int i = 0; i<ilosc_stacji;i++){
+            stacje[i]->trt_dec();
 			stacje[i]->send();
+
 		}
 	}
 	system("pause");
