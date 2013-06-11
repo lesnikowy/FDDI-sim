@@ -198,7 +198,7 @@ void Stacja::send(){
 
 	if (pakiet == NULL && token == true)
 	   send_token();
-    else if (pakiet != NULL && (token == true || receiving == true || sending == true)) {// rozdzielenie funkcji send i przeka¿
+    else if (pakiet != NULL && (token == true || ((receiving == true || sending == true) && pakiet->fc->type != 't'))) {// rozdzielenie funkcji send i przeka¿
 		if (sending == false){
 			cout << it_time << label << " rozpoczal nadawanie pakietu "<< pakiet->fc->type << " o dlugosci " << pakiet-> length() << endl;
 			nastepna->receiving = true;
