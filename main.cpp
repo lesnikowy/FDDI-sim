@@ -2,14 +2,28 @@
 #include<string>
 #include<math.h>
 #include<vector>
+#include<time.h>
 using namespace std;
 
+class Stacja;
+
+vector<Stacja*> stacje; // wrzucilem proces z maina do funkcji
 long it_time = 0;
 long stop_time;
 int TTRT = 0;
+bool broken = true; //czy siec nie dziala poprawnie
+bool initialized = false; //true jesli siec zostala zainicjalizowana i nie ma jeszcze tokenu
 
-
-class Stacja;
+int rand_exp(int from, int to) {
+	while (true) {
+		srand(time(NULL));
+		float r = 1 / (float)rand();
+		float a = - 1 / (float)rand();
+		if ( r < exp (a)) {
+			return from + (int) a * to;
+		}
+	}
+}
 
 class FC_field {
 public:
@@ -91,7 +105,6 @@ int Pakiet::length() {
 	return PA_l + SD_l + fc->length + DA_l + SA_l + INFO_l + FCS_l + FS_l;
 }
 
-
 // klasa stacji
 class Stacja {
 	public:
@@ -132,6 +145,8 @@ class Stacja {
 		bool receiving;
 		bool sending;
 		long send_counter;
+
+		void generateData(); // true - synchroniczne
 };
 
 Stacja::Stacja(string str,int isyncTime, int ipasmo) {
@@ -154,7 +169,7 @@ Stacja::Stacja(string str,int isyncTime, int ipasmo) {
 	ct_late = false;
 	token = false;
 	monitor = false;
-	
+
 	pakiet = NULL;
 	receiving = false;
 	sending = false;
@@ -164,19 +179,19 @@ Stacja::Stacja(string str,int isyncTime, int ipasmo) {
 void Stacja::trt_dec(){
      if(TRT>0)
         TRT--;
-     else
-       TRT=TTRT;
+     else {
+		TRT=TTRT;
+		ct_late = true;
+	 }
 }
 
 void Stacja::send_token(){
      pakiet = new Pakiet(true, 't', 1, nastepna, this, 0 );
-     nastepna->zapakuj();
-     nastepna->send();
 }
 
-void Stacja::zapakuj(){
+void Stacja::zapakuj() {
      if(syncData > 0){
-           if(asyncData > 9000){   
+           if(syncData > 9000){   
               pakiet = new Pakiet(true, 's', 1, nastepna, this, 9000 );
               syncData -= 9000;
            }else{
@@ -194,118 +209,163 @@ void Stacja::zapakuj(){
      }
      send();
 }
-void Stacja::send(){
 
-	if (pakiet == NULL && token == true)
-	   send_token();
-    else if (pakiet != NULL && (token == true || ((receiving == true || sending == true) && pakiet->fc->type != 't'))) {// rozdzielenie funkcji send i przeka¿
-		if (sending == false){
-			cout << it_time << label << " rozpoczal nadawanie pakietu "<< pakiet->fc->type << " o dlugosci " << pakiet-> length() << endl;
-			nastepna->receiving = true;
-			sending = true;
-			send_counter = pakiet->length();
+void Stacja::send(){
+	if (!broken) {
+		if(initialized && monitor) { // monitor tworzy token
+			initialized = false;
+			token = true;
 		}
-		else if (sending == true && send_counter > 0) {
-			if ((pakiet->length() - pakiet->PA_l - pakiet->SD_l - pakiet->fc->length == send_counter) && pakiet->fc->type == 't') {
-               token = false;
-               nastepna->token = true;
-               cout << it_time << nastepna->label << " dostal token" << endl;
-               if(nastepna->TRT > 0)
-                  nastepna->THT = TRT;
-               else
-                  nastepna->THT = 0; 
-               nastepna->TRT = TTRT;
-            }
-            else if (pakiet->length() - pakiet->DA_l - pakiet->PA_l - pakiet->SD_l - pakiet->fc->length  == send_counter) {                
-                if  (pakiet->DA == nastepna){
-					cout << it_time << nastepna->label << " dostalem pakiet " << pakiet->fc-> type << endl;
-					cout << it_time <<  " Pakiet przyszedl od " << pakiet->SA->label << endl;
-				}else{
-					nastepna->pakiet=pakiet;
-					nastepna->send();
-					cout << it_time << nastepna->label << " przesyla dalej pakiet do "<< pakiet->fc->type << nastepna->nastepna->label << endl;
-				}
+		if (pakiet == NULL && token == true) {
+		    send_token();
+		}
+		else if (pakiet != NULL && (token == true || ((receiving == true || sending == true) && pakiet->fc->type != 't'))) {// rozdzielenie funkcji send i przekaÂ¿
+			if (sending == false){
+				cout << it_time << label << " rozpoczal nadawanie pakietu "<< pakiet->fc->type << " o dlugosci " << pakiet-> length() << endl;
+				nastepna->receiving = true;
+				sending = true;
+				send_counter = pakiet->length();
 			}
-			
-			send_counter--;
+			else if (sending == true && send_counter > 0) {
+				if ((pakiet->length() - pakiet->PA_l - pakiet->SD_l - pakiet->fc->length == send_counter) && pakiet->fc->type == 't') {
+		           token = false;
+		           nastepna->token = true;
+				   nastepna->ct_late = false;
+		           cout << it_time << nastepna->label << " dostal token" << endl;
+		           if(nastepna->TRT > 0)
+		              nastepna->THT = TRT;
+		           else {
+		              nastepna->THT = 0;
+				   }
+				   nastepna->ct_late = false;
+				   nastepna->TRT = TTRT;
+				   nastepna->generateData(); //poprzednia generuje dane
+				   nastepna->zapakuj();
+				}
+		        else if (pakiet->length() - pakiet->DA_l - pakiet->PA_l - pakiet->SD_l - pakiet->fc->length  == send_counter) {                
+					if  (pakiet->DA == nastepna){
+						cout << it_time << nastepna->label << " dostalem pakiet " << pakiet->fc-> type << endl;
+						cout << it_time <<  " Pakiet przyszedl od " << pakiet->SA->label << endl;
+					}else{
+						nastepna->pakiet=pakiet;
+						nastepna->send();
+						cout << it_time << nastepna->label << " przesyla dalej pakiet do "<< pakiet->fc->type << nastepna->nastepna->label << endl;
+					}
+				}
+
+				send_counter--;
+			}
+			else if (sending == true) {
+				sending = false;
+				nastepna->receiving = false;
+				pakiet = NULL;
+				cout << it_time << label << " zakonczyl nadawanie pakietu." << endl;
+				if(asyncData == 0){
+				   send_token();
+	            }else{
+	               if(asyncData > 9000){   
+	                  pakiet = new Pakiet(true, 'a', 1, nastepna, this, 9000 );
+	                  asyncData -= 9000;
+	               }else{
+	                  pakiet = new Pakiet(true, 'a', 1, nastepna, this, asyncData );
+	                  asyncData = 0;   
+	               }
+	               send();
+	            }
+			}
 		}
-		else if (sending == true) {
-			sending = false;
-			nastepna->receiving = false;
-			pakiet = NULL;
-			cout << it_time << label << " zakonczyl nadawanie pakietu." << endl;
-			if(asyncData == 0){
-			   send_token();
-            }else{
-               if(asyncData > 9000){   
-                  pakiet = new Pakiet(true, 'a', 1, nastepna, this, 9000 );
-                  asyncData -= 9000;
-               }else{
-                  pakiet = new Pakiet(true, 'a', 1, nastepna, this, asyncData );
-                  asyncData = 0;   
-               }
-               send();
-            }
-		}
-	}
+	} else cout << it_time << " Wykryto uszkodzenie sieci" << endl;
 }   
 
+void Stacja::generateData() {
+	syncData = 50; // zakladamy staly ruch synchroniczny
+
+	asyncData = asyncData + rand_exp(0, 2 * 50);
+
+	cout << it_time << " stacja " << label << " dane sync = " << syncData << " async = " << asyncData << endl; 
+}
+
+void nowa_stacja() {
+	string label;
+	int syncTime;
+	int pasmo;
+	cout << "Podaj nazwe stacji:" << endl;
+	cin >> label;
+	cout << "Podaj syncTime stacji:" << endl;
+	cin >> syncTime;
+	cout << "Podaj pasmo stacji:" << endl;
+	cin >> pasmo;
+	stacje.push_back(new Stacja(label, syncTime, pasmo));
+	cout << pasmo << endl;
+}
+
+bool init(int ilosc_stacji) {
+	if (broken) {
+		TTRT = stacje[0]->syncTime;
+
+		int who_monit = 0; //kto zostanie monitorem
+
+		for (int i = 0; i<ilosc_stacji;i++){
+			if(i != 0){
+				stacje[i]->poprzednia = stacje[i-1];
+			}else{
+				stacje[i]->poprzednia = stacje[ilosc_stacji-1];
+			}
+			if(i != ilosc_stacji-1){
+					stacje[i]->nastepna = stacje[i+1];
+			}else{
+				stacje[i]->nastepna = stacje[0];
+			}
+			if(stacje[i]->syncTime < TTRT) {
+		        TTRT = stacje[i]->syncTime;
+				who_monit = i;
+			}
+			stacje[i]->monitor = false;
+		}
+
+		stacje[who_monit]->monitor = true;
+		
+		for (int i = 0; i<ilosc_stacji;i++)
+		    stacje[i]->pasmo = (stacje[i]->pasmo * TTRT)/stacje[i]->syncTime;
+		int suma_pasm = 0; 
+		for (int i = 0; i<ilosc_stacji;i++)
+		    suma_pasm += (stacje[i]->pasmo);
+		if(suma_pasm > TTRT){
+		    cout << "Nie mozna utworzyc sieci o takich parametrach" << endl;
+			return false;
+		} else {
+			broken = false;
+			initialized = true;
+			cout << it_time << " inicjalizacja sieci zakonczona sukcesem, monitorem zostala stacja " << stacje[who_monit]->label << endl;
+			return true;
+		}
+	}
+	return true;
+}
 
 int main() {
-	vector<Stacja*> stacje;
 	int ilosc_stacji;
 	cout << "Podaj czas symulacji:" << endl;
 	cin >> stop_time;
 	cout << "Podaj liczbe stacji:" << endl;
 	cin >> ilosc_stacji;
 	for (int i = 0; i<ilosc_stacji;i++){
-		string label;
-		int syncTime;
-		int pasmo;
-		cout << "Podaj nazwe stacji:" << endl;
-		cin >> label;
-		cout << "Podaj syncTime stacji:" << endl;
-		cin >> syncTime;
-		cout << "Podaj pasmo stacji:" << endl;
-		cin >> syncTime;
-		stacje.push_back(new Stacja(label, syncTime, pasmo));
+		nowa_stacja();
 	}
-	TTRT = stacje[0]->syncTime;
-	
-	for (int i = 0; i<ilosc_stacji;i++){
-		if(i != 0){
-			stacje[i]->poprzednia = stacje[i-1];
-		}else{
-			stacje[i]->poprzednia = stacje[ilosc_stacji-1];
-		}
-		if(i != ilosc_stacji-1){
-			stacje[i]->nastepna = stacje[i+1];
-		}else{
-			stacje[i]->nastepna = stacje[0];
-		}
-		if(stacje[i]->syncTime < TTRT)
-            TTRT = stacje[i]->syncTime;
-	}
-	for (int i = 0; i<ilosc_stacji;i++)
-	    stacje[i]->pasmo = (stacje[i]->pasmo * TTRT)/stacje[i]->syncTime;
-	int suma_pasm = 0; 
-    for (int i = 0; i<ilosc_stacji;i++)
-        suma_pasm += (stacje[i]->pasmo);
-    if(suma_pasm > TTRT){
-        cout << "Nie mo¿na utworzyc sieci o takich parametrach" << endl;
-        return 0;
-    }        
+
+	if (!init(ilosc_stacji)) return 0; // inicjalizacja sieci, jesli nie udalo sie zwraca false i konczy program
+
 	//sztywny pakiet i token
-	stacje[0]->pakiet = new Pakiet(true, 's', 0, stacje[2], stacje[0], 300);
-    stacje[0]->token = true;
-    stacje[2]->asyncData = 200;
-    stacje[2]->syncData = 200;    
+//	stacje[0]->pakiet = new Pakiet(true, 's', 0, stacje[2], stacje[0], 300);
+//    stacje[0]->token = true;
+//    stacje[2]->asyncData = 200;
+//    stacje[2]->syncData = 200;    
 	for (it_time; it_time<stop_time; it_time++){
 		for (int i = 0; i<ilosc_stacji;i++){
             stacje[i]->trt_dec();
 			stacje[i]->send();
-
 		}
+
 	}
 	system("pause");
 }
