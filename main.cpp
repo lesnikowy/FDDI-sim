@@ -14,16 +14,6 @@ int TTRT = 0;
 bool broken = true; //czy siec nie dziala poprawnie
 bool initialized = false; //true jesli siec zostala zainicjalizowana i nie ma jeszcze tokenu
 
-int rand_exp(int from, int to) {
-	while (true) {
-		srand(time(NULL));
-		float r = 1 / (float)rand();
-		float a = - 1 / (float)rand();
-		if ( r < exp (a)) {
-			return from + (int) a * to;
-		}
-	}
-}
 
 class FC_field {
 public:
@@ -155,7 +145,6 @@ Stacja::Stacja(string str,int isyncTime, int ipasmo) {
 	syncTime = isyncTime;
 	THT = 0;
 	TRT = 0;
-    pasmo = 0;
 	syncData = 0;
 	asyncData = 0;
 /*	asyncData7 = 0;
@@ -190,15 +179,16 @@ void Stacja::send_token(){
 }
 
 void Stacja::zapakuj() {
-     if(syncData > 0){
+     if(syncData > 0){               
            if(syncData > 9000){   
               pakiet = new Pakiet(true, 's', 1, nastepna, this, 9000 );
               syncData -= 9000;
+              
            }else{
               pakiet = new Pakiet(true, 's', 1, nastepna, this, syncData );
               syncData = 0;   
            } 		   
-     }else if(asyncData > 0 && THT > 0){
+     }else if(asyncData > 0 && THT > 0 && !ct_late){
            if(asyncData > 9000){   
               pakiet = new Pakiet(true, 'a', 1, nastepna, this, 9000 );
               asyncData -= 9000;
@@ -220,7 +210,8 @@ void Stacja::send(){
 		    send_token();
 		}
 		else if (pakiet != NULL && (token == true || ((receiving == true || sending == true) && pakiet->fc->type != 't'))) {// rozdzielenie funkcji send i przeka¿
-			if (sending == false){
+
+            if (sending == false){
 				cout << it_time << label << " rozpoczal nadawanie pakietu "<< pakiet->fc->type << " o dlugosci " << pakiet-> length() << endl;
 				nastepna->receiving = true;
 				sending = true;
@@ -232,12 +223,15 @@ void Stacja::send(){
 		           nastepna->token = true;
 				   nastepna->ct_late = false;
 		           cout << it_time << nastepna->label << " dostal token" << endl;
-		           if(nastepna->TRT > 0)
-		              nastepna->THT = TRT;
-		           else {
+		           cout << " THT: " << THT << "dla stacji " << label <<endl;
+                   if(nastepna->TRT > 0 || !ct_late){
+		              nastepna->THT = nastepna->TRT;
+		              
+		           }else {
 		              nastepna->THT = 0;
 				   }
-				   nastepna->ct_late = false;
+				   sending = false;
+				   nastepna->receiving = false;
 				   nastepna->TRT = TTRT;
 				   nastepna->generateData(); //poprzednia generuje dane
 				   nastepna->zapakuj();
@@ -259,18 +253,12 @@ void Stacja::send(){
 				sending = false;
 				nastepna->receiving = false;
 				pakiet = NULL;
+				
 				cout << it_time << label << " zakonczyl nadawanie pakietu." << endl;
-				if(asyncData == 0){
+				if(asyncData == 0 && syncData==0){
 				   send_token();
 	            }else{
-	               if(asyncData > 9000){   
-	                  pakiet = new Pakiet(true, 'a', 1, nastepna, this, 9000 );
-	                  asyncData -= 9000;
-	               }else{
-	                  pakiet = new Pakiet(true, 'a', 1, nastepna, this, asyncData );
-	                  asyncData = 0;   
-	               }
-	               send();
+                      zapakuj();
 	            }
 			}
 		}
@@ -278,9 +266,9 @@ void Stacja::send(){
 }   
 
 void Stacja::generateData() {
-	syncData = 50; // zakladamy staly ruch synchroniczny
-
-	asyncData = asyncData + rand_exp(0, 2 * 50);
+	syncData += pasmo-370;// zakladamy staly ruch synchroniczny
+	
+    asyncData += rand()%pasmo;
 
 	cout << it_time << " stacja " << label << " dane sync = " << syncData << " async = " << asyncData << endl; 
 }
@@ -288,13 +276,19 @@ void Stacja::generateData() {
 void nowa_stacja() {
 	string label;
 	int syncTime;
-	int pasmo;
+	int pasmo=0;
 	cout << "Podaj nazwe stacji:" << endl;
 	cin >> label;
 	cout << "Podaj syncTime stacji:" << endl;
-	cin >> syncTime;
-	cout << "Podaj pasmo stacji:" << endl;
-	cin >> pasmo;
+	//cin >> syncTime;
+	syncTime =1500;
+	while(pasmo<370){
+        cout << "Podaj pasmo stacji:" << endl;
+    	//cin >> pasmo;
+    	pasmo = 470;
+     if(pasmo < 370)
+              cout << "Pasmo powinno byc nie mniejsze od 370" << endl;	
+    }
 	stacje.push_back(new Stacja(label, syncTime, pasmo));
 	cout << pasmo << endl;
 }
@@ -337,18 +331,24 @@ bool init(int ilosc_stacji) {
 			broken = false;
 			initialized = true;
 			cout << it_time << " inicjalizacja sieci zakonczona sukcesem, monitorem zostala stacja " << stacje[who_monit]->label << endl;
-			return true;
+			for (int i = 0; i<ilosc_stacji;i++){
+                stacje[i]->TRT = TTRT;
+	    	}   
+            return true;
 		}
 	}
 	return true;
 }
 
 int main() {
+    srand(time(NULL));
 	int ilosc_stacji;
 	cout << "Podaj czas symulacji:" << endl;
-	cin >> stop_time;
+	//cin >> stop_time;
+	stop_time = 5000;
 	cout << "Podaj liczbe stacji:" << endl;
-	cin >> ilosc_stacji;
+	//cin >> ilosc_stacji;
+	ilosc_stacji = 3;
 	for (int i = 0; i<ilosc_stacji;i++){
 		nowa_stacja();
 	}
