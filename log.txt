@@ -1,0 +1,144 @@
+0 inicjalizacja sieci zakonczona sukcesem, monitorem zostala stacja a
+1a rozpoczal nadawanie pakietu t o dlugosci 185
+172b dostal token
+ THT: 0dla stacji a
+172 stacja b dane sync = 100 async = 313
+172b rozpoczal nadawanie pakietu s o dlugosci 470
+402c dostalem pakiet s
+402 Pakiet przyszedl od b
+642b zakonczyl nadawanie pakietu.
+642b rozpoczal nadawanie pakietu a o dlugosci 737
+873c dostalem pakiet a
+873 Pakiet przyszedl od b
+1380b zakonczyl nadawanie pakietu.
+1381b rozpoczal nadawanie pakietu t o dlugosci 185
+1552c dostal token
+ THT: 2828dla stacji b
+1552 stacja c dane sync = 100 async = 155
+1552c rozpoczal nadawanie pakietu s o dlugosci 470
+1782a dostalem pakiet s
+1782 Pakiet przyszedl od c
+2022c zakonczyl nadawanie pakietu.
+2022c rozpoczal nadawanie pakietu a o dlugosci 539
+2253a dostalem pakiet a
+2253 Pakiet przyszedl od c
+2562c zakonczyl nadawanie pakietu.
+2563c rozpoczal nadawanie pakietu t o dlugosci 185
+2734a dostal token
+ THT: 1448dla stacji c
+2734 stacja a dane sync = 100 async = 126
+2734a rozpoczal nadawanie pakietu s o dlugosci 470
+2965b dostalem pakiet s
+2965 Pakiet przyszedl od a
+3205a zakonczyl nadawanie pakietu.
+3205a rozpoczal nadawanie pakietu a o dlugosci 503
+3436b dostalem pakiet a
+3436 Pakiet przyszedl od a
+3709a zakonczyl nadawanie pakietu.
+3710a rozpoczal nadawanie pakietu t o dlugosci 185
+3881b dostal token
+ THT: 265dla stacji a
+3881 stacja b dane sync = 100 async = 2
+3881b rozpoczal nadawanie pakietu s o dlugosci 470
+4111c dostalem pakiet s
+4111 Pakiet przyszedl od b
+4351b zakonczyl nadawanie pakietu.
+4351b rozpoczal nadawanie pakietu a o dlugosci 348
+4582c dostalem pakiet a
+4582 Pakiet przyszedl od b
+4700b zakonczyl nadawanie pakietu.
+4701b rozpoczal nadawanie pakietu t o dlugosci 185
+4872c dostal token
+ THT: 2292dla stacji b
+4872 stacja c dane sync = 100 async = 467
+4872c rozpoczal nadawanie pakietu s o dlugosci 470
+5102a dostalem pakiet s
+5102 Pakiet przyszedl od c
+5342c zakonczyl nadawanie pakietu.
+5342c rozpoczal nadawanie pakietu a o dlugosci 929
+5573a dostalem pakiet a
+5573 Pakiet przyszedl od c
+6272c zakonczyl nadawanie pakietu.
+6273c rozpoczal nadawanie pakietu t o dlugosci 185
+6444a dostal token
+ THT: 2681dla stacji c
+6444 stacja a dane sync = 100 async = 258
+6444a rozpoczal nadawanie pakietu s o dlugosci 470
+6675b dostalem pakiet s
+6675 Pakiet przyszedl od a
+6915a zakonczyl nadawanie pakietu.
+6915a rozpoczal nadawanie pakietu a o dlugosci 668
+7146b dostalem pakiet a
+7146 Pakiet przyszedl od a
+7584a zakonczyl nadawanie pakietu.
+7585a rozpoczal nadawanie pakietu t o dlugosci 185
+7756b dostal token
+ THT: 2291dla stacji a
+7756 stacja b dane sync = 100 async = 139
+7756b rozpoczal nadawanie pakietu s o dlugosci 470
+7986c dostalem pakiet s
+7986 Pakiet przyszedl od b
+8226b zakonczyl nadawanie pakietu.
+8226b rozpoczal nadawanie pakietu a o dlugosci 519
+8457c dostalem pakiet a
+8457 Pakiet przyszedl od b
+8746b zakonczyl nadawanie pakietu.
+8747b rozpoczal nadawanie pakietu t o dlugosci 185
+8918c dostal token
+ THT: 2126dla stacji b
+8918 stacja c dane sync = 100 async = 25
+8918c rozpoczal nadawanie pakietu s o dlugosci 470
+9148a dostalem pakiet s
+9148 Pakiet przyszedl od c
+9388c zakonczyl nadawanie pakietu.
+9388c rozpoczal nadawanie pakietu a o dlugosci 377
+9619a dostalem pakiet a
+9619 Pakiet przyszedl od c
+9766c zakonczyl nadawanie pakietu.
+9767c rozpoczal nadawanie pakietu t o dlugosci 185
+9938a dostal token
+ THT: 1955dla stacji c
+9938 stacja a dane sync = 100 async = 330
+9938a rozpoczal nadawanie pakietu s o dlugosci 470
+10169b dostalem pakiet s
+10169 Pakiet przyszedl od a
+10409a zakonczyl nadawanie pakietu.
+10409a rozpoczal nadawanie pakietu a o dlugosci 758
+10640b dostalem pakiet a
+10640 Pakiet przyszedl od a
+11168a zakonczyl nadawanie pakietu.
+11169a rozpoczal nadawanie pakietu t o dlugosci 185
+11340b dostal token
+ THT: 2507dla stacji a
+11340 stacja b dane sync = 100 async = 450
+11340b rozpoczal nadawanie pakietu s o dlugosci 470
+11570c dostalem pakiet s
+11570 Pakiet przyszedl od b
+11810b zakonczyl nadawanie pakietu.
+11810b rozpoczal nadawanie pakietu a o dlugosci 908
+12041c dostalem pakiet a
+12041 Pakiet przyszedl od b
+12719b zakonczyl nadawanie pakietu.
+12720b rozpoczal nadawanie pakietu t o dlugosci 185
+12891c dostal token
+ THT: 2417dla stacji b
+12891 stacja c dane sync = 100 async = 139
+12891c rozpoczal nadawanie pakietu s o dlugosci 470
+13121a dostalem pakiet s
+13121 Pakiet przyszedl od c
+13361c zakonczyl nadawanie pakietu.
+13361c rozpoczal nadawanie pakietu a o dlugosci 519
+13592a dostalem pakiet a
+13592 Pakiet przyszedl od c
+13881c zakonczyl nadawanie pakietu.
+13882c rozpoczal nadawanie pakietu t o dlugosci 185
+14053a dostal token
+ THT: 2028dla stacji c
+14053 stacja a dane sync = 100 async = 291
+14053a rozpoczal nadawanie pakietu s o dlugosci 470
+14284b dostalem pakiet s
+14284 Pakiet przyszedl od a
+14524a zakonczyl nadawanie pakietu.
+14524a rozpoczal nadawanie pakietu a o dlugosci 709
+14755b dostalem pakiet a
+14755 Pakiet przyszedl od a
