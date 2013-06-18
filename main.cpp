@@ -4,6 +4,7 @@
 #include<vector>
 #include<time.h>
 #include<fstream>
+#include<stdlib.h>
 using namespace std;
 
 class Stacja;
@@ -19,10 +20,11 @@ bool initialized = false; //true jesli siec zostala zainicjalizowana i nie ma je
 fstream log_file;
 fstream trt_file;
 fstream tht_file;
+fstream async_file;
 
 class FC_field {
 public:
-  bool l;
+  bool l;	
 	char type; // a, s, n, c, b, t
 	short pryiorytet;
 	int length;
@@ -185,21 +187,27 @@ void Stacja::send_token(){
 }
 
 void Stacja::zapakuj() {
+	
+	Stacja* wyslij;
+	int i = rand() % stacje.size();
+	if (stacje[i] == this) wyslij = nastepna;
+	else wyslij = stacje[i];
+	
      if(syncData > 0){               
            if(syncData > 9000){   
-              pakiet = new Pakiet(true, 's', 1, nastepna, this, 9000 );
+              pakiet = new Pakiet(true, 's', 1, wyslij, this, 9000 );
               syncData -= 9000;
               
            }else{
-              pakiet = new Pakiet(true, 's', 1, nastepna, this, syncData );
+              pakiet = new Pakiet(true, 's', 1, wyslij, this, syncData );
               syncData = 0;   
            } 		   
      }else if(asyncData > 0 && THT > 0 && !ct_late){
            if(asyncData > 9000){   
-              pakiet = new Pakiet(true, 'a', 1, nastepna, this, 9000 );
+              pakiet = new Pakiet(true, 'a', 1, wyslij, this, 9000 );
               asyncData -= 9000;
            }else{
-              pakiet = new Pakiet(true, 'a', 1, nastepna, this, asyncData );
+              pakiet = new Pakiet(true, 'a', 1, wyslij, this, asyncData );
               asyncData = 0;   
            }     
      }
@@ -215,11 +223,11 @@ void Stacja::send(){
 		if (pakiet == NULL && token == true) {
 		    send_token();
 		}
-		else if (pakiet != NULL && (token == true || ((receiving == true || sending == true) && pakiet->fc->type != 't'))) {// rozdzielenie funkcji send i przeka¿
+		else if (pakiet != NULL && (token == true || ((receiving == true || sending == true) && pakiet->fc->type != 't'))) {// rozdzielenie funkcji send i przeka?
 
             if (sending == false){
-				cout << it_time << label << " rozpoczal nadawanie pakietu "<< pakiet->fc->type << " o dlugosci " << pakiet-> length() << endl;
-				log_file << it_time << label << " rozpoczal nadawanie pakietu "<< pakiet->fc->type << " o dlugosci " << pakiet-> length() << endl;
+				cout << it_time << " " << label << " rozpoczal nadawanie pakietu "<< pakiet->fc->type << " o dlugosci " << pakiet-> length() << endl;
+				log_file << it_time << " " << label << " rozpoczal nadawanie pakietu "<< pakiet->fc->type << " o dlugosci " << pakiet-> length() << endl;
 				nastepna->receiving = true;
 				sending = true;
 				send_counter = pakiet->length();
@@ -231,11 +239,11 @@ void Stacja::send(){
 				   nastepna->ct_late = false;
 		           cout << it_time << nastepna->label << " dostal token" << endl;
 		           log_file << it_time << nastepna->label << " dostal token" << endl;
-		           cout << " THT: " << THT << "dla stacji " << label <<endl;
-		           log_file << " THT: " << THT << "dla stacji " << label <<endl;
+		           cout << it_time << " THT: " << THT << "dla stacji " << label <<endl;
+		           log_file << it_time << " THT: " << THT << "dla stacji " << label <<endl;
                    if(nastepna->TRT > 0 || !ct_late){
 		              nastepna->THT = nastepna->TRT;
-		              
+
 		           }else {
 		              nastepna->THT = 0;
 				   }
@@ -247,16 +255,16 @@ void Stacja::send(){
 				}
 		        else if (pakiet->length() - pakiet->DA_l - pakiet->PA_l - pakiet->SD_l - pakiet->fc->length  == send_counter) {                
 					if  (pakiet->DA == nastepna){
-						cout << it_time << nastepna->label << " dostalem pakiet " << pakiet->fc-> type << endl;
-						log_file << it_time << nastepna->label << " dostalem pakiet " << pakiet->fc-> type << endl; 
+						cout << it_time << " " << nastepna->label << " dostalem pakiet " << pakiet->fc-> type << endl;
+						log_file << it_time << " " << nastepna->label << " dostalem pakiet " << pakiet->fc-> type << endl; 
 						cout << it_time <<  " Pakiet przyszedl od " << pakiet->SA->label << endl;
                         log_file << it_time <<  " Pakiet przyszedl od " << pakiet->SA->label << endl;
                     }else{
 						nastepna->pakiet=pakiet;
 						nastepna->send();
-						cout << it_time << nastepna->label << " przesyla dalej pakiet do "<< pakiet->fc->type << nastepna->nastepna->label << endl;
-						log_file << it_time << nastepna->label << " przesyla dalej pakiet do "<< pakiet->fc->type << nastepna->nastepna->label << endl;
-					}
+						cout << it_time << " " << nastepna->label << " przesyla dalej pakiet"<<pakiet->fc->type<<" do "<< pakiet->fc->type << nastepna->nastepna->label << " o adresie "<< pakiet->DA->label << endl;
+						log_file << it_time << " " << nastepna->label << " przesyla dalej pakiet"<< pakiet->fc->type<<" do " << nastepna->nastepna->label << " o adresie "<< pakiet->DA->label << endl;		
+						}
 				}
 
 				send_counter--;
@@ -265,9 +273,9 @@ void Stacja::send(){
 				sending = false;
 				nastepna->receiving = false;
 				pakiet = NULL;
-				
-				cout << it_time << label << " zakonczyl nadawanie pakietu." << endl;
-				log_file << it_time << label << " zakonczyl nadawanie pakietu." << endl;
+
+				cout << it_time << " " << label << " zakonczyl nadawanie pakietu." << endl;
+				log_file << it_time << " " << label << " zakonczyl nadawanie pakietu." << endl;
 				if(asyncData == 0 && syncData==0){
 				   send_token();
 	            }else{
@@ -276,14 +284,14 @@ void Stacja::send(){
 			}
 		}
 	} else {
-           cout << it_time << " Wykryto uszkodzenie sieci" << endl;
-           log_file << it_time << label << " zakonczyl nadawanie pakietu." << endl;
+           cout << it_time << " "<< " Wykryto uszkodzenie sieci" << endl;
+           log_file << it_time << " " << label << " zakonczyl nadawanie pakietu." << endl;
            }
 }   
 
 void Stacja::generateData() {
 	syncData += pasmo-370;// zakladamy staly ruch synchroniczny
-	
+
     asyncData += rand()%pasmo;
 
 	cout << it_time << " stacja " << label << " dane sync = " << syncData << " async = " << asyncData << endl;
@@ -297,12 +305,12 @@ void nowa_stacja() {
 	cout << "Podaj nazwe stacji:" << endl;
 	cin >> label;
 	cout << "Podaj syncTime stacji:" << endl;
-	//cin >> syncTime;
-	syncTime =3000;
+	cin >> syncTime;
+	//syncTime =3000;
 	while(pasmo<370){
         cout << "Podaj pasmo stacji:" << endl;
-    	//cin >> pasmo;
-    	pasmo = 470;
+    	cin >> pasmo;
+    	//pasmo = 470;
      if(pasmo < 370)
               cout << "Pasmo powinno byc nie mniejsze od 370" << endl;	
     }
@@ -335,7 +343,7 @@ bool init(int ilosc_stacji) {
 		}
 
 		stacje[who_monit]->monitor = true;
-		
+
 		for (int i = 0; i<ilosc_stacji;i++)
 		    stacje[i]->pasmo = (stacje[i]->pasmo * TTRT)/stacje[i]->syncTime;
 		int suma_pasm = 0; 
@@ -363,14 +371,15 @@ int main() {
     log_file.open( "log.txt", ios::out );
     trt_file.open( "trt.txt", ios::out );
     tht_file.open( "tht.txt", ios::out );
+    async_file.open( "async.txt", ios::out);
     srand(time(NULL));
 	int ilosc_stacji;
 	cout << "Podaj czas symulacji:" << endl;
-	//cin >> stop_time;
-	stop_time = 15000;
+	cin >> stop_time;
+	//stop_time = 15000;
 	cout << "Podaj liczbe stacji:" << endl;
-	//cin >> ilosc_stacji;
-	ilosc_stacji = 3;
+	cin >> ilosc_stacji;
+	//ilosc_stacji = 3;
 	for (int i = 0; i<ilosc_stacji;i++){
 		nowa_stacja();
 	}
@@ -388,12 +397,15 @@ int main() {
 			stacje[i]->send();
 			trt_file << stacje[i]->TRT << '|';
 			tht_file << stacje[i]->THT << '|';
+			async_file << stacje[i]->asyncData << '|';
 		}
   trt_file << endl;
   tht_file << endl;
+  async_file << endl;
 	}
 	log_file.close();
 	trt_file.close();
 	tht_file.close();
+	async_file.close();
 	system("pause");
 }
